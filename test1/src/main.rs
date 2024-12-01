@@ -5,7 +5,11 @@ mod entities;
 
 use clap::{Parser, Subcommand};
 //use entities::{livro::Livro, status::Status};
-use commands::{livro_command::{add_livro, list_livros, remove_livro, update_status_livro}};
+use commands::{
+    livro_command::{add_livro, list_livros, remove_livro, update_status_livro},
+    user_command::{add_user, list_users}
+};
+
 use db::init_db;
 
 #[derive(Parser)]
@@ -33,6 +37,13 @@ enum Commands {
         id: i32,
         status: String,
     },
+    AddUser {
+        nome: String,
+        cpf: String,
+        livro_id: i32,
+        status: String,
+    },
+    ListUser,
 }
 
 fn main() {
@@ -57,6 +68,15 @@ fn main() {
         Commands::UpdateStatusLivro { id, status } => {
             // Chama o comando para atualizar o status de um livro
             update_status_livro(&conn, *id, status);
+        }
+        
+        //Chama comandos para adicionar usuários e listar livros associados
+        Commands::AddUser { nome, cpf, livro_id, status 
+        } => {
+            add_user(&conn, nome, cpf, *livro_id, status);
+        }
+        Commands::ListUser => {
+            list_users(&conn);
         }
             
     }
