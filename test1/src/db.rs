@@ -1,9 +1,12 @@
 use rusqlite::{Connection, Result};
 
-// Inicializa o banco de dados e cria a tabela se necessário
+/// Inicializa a conexão com o banco de dados SQLite.
+/// 
+/// Retorna uma conexão pronta para ser usada ou um erro caso a conexão falhe.
 pub fn init_db() -> Result<Connection> {
     let conn = Connection::open("livros.db")?;
 
+    // Criação de tabela, se necessário
     conn.execute(
         "CREATE TABLE IF NOT EXISTS livros (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -1,36 +1,63 @@
+// src/main.rs
 mod db;
-mod livro;
-mod status;
+mod commands;
+mod entities;
 
+use clap::{Parser, Subcommand};
+//use entities::{livro::Livro, status::Status};
+use commands::{livro_command::{add_livro, list_livros, remove_livro, update_status_livro}};
 use db::init_db;
-use livro::{listar_livros, Livro};
-use status::Status;
-use chrono::NaiveDate;
 
-fn main() -> rusqlite::Result<()> {
-    let conn = init_db()?; // Inicializa o banco de dados
+#[derive(Parser)]
+#[command(name = "Gerenciador de Livros")]
+#[command(about = "Sistema para gerenciar livros diretamente do terminal", long_about = None)]
 
-    // Criar um novo livro
-    let mut livro = Livro::new(
-        "Rust Programming".to_string(),
-        NaiveDate::from_ymd_opt(2021, 9, 1).expect("expect valid data"),
-        450,
-        Status::NaoLido,
-    ).expect("Dados inválidos");
-    livro.save(&conn)?;
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
 
-    // Listar livros
-    let livros = listar_livros(&conn)?;
-    for livro in livros {
-        println!("{:?}", livro);
+#[derive(Subcommand)]
+enum Commands {
+    AddLivro {
+        titulo: String,
+        data_publicacao: String,
+        numero_paginas: i32,
+        status: String,
+    },
+    ListLivro,
+    RemoveLivro {
+        id: i32,
+    },
+    UpdateStatusLivro {
+        id: i32,
+        status: String,
+    },
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    // Inicializa o banco de dados
+    let conn = init_db().expect("Erro ao conectar com o banco de dados.");
+
+    match &cli.command {
+        Commands::AddLivro { titulo, data_publicacao, numero_paginas, status } => {
+            // Chama o comando para adicionar um livro, passando a conexão e os parâmetros brutos
+            add_livro(&conn, titulo, data_publicacao, *numero_paginas, status);
+        }
+        Commands::ListLivro => {
+            // Chama o comando para listar livros
+            list_livros(&conn);
+        }
+        Commands::RemoveLivro { id } => {
+            // Chama o comando para remover um livro
+            remove_livro(&conn, *id);
+        }
+        Commands::UpdateStatusLivro { id, status } => {
+            // Chama o comando para atualizar o status de um livro
+            update_status_livro(&conn, *id, status);
+        }
+            
     }
-
-    // Atualizar o livro
-    livro.titulo = "Rust Programming - Updated".to_string();
-    livro.atualizar(&conn)?;
-
-    // Remover o livro
-    livro.remover(&conn)?;
-
-    Ok(())
 }

@@ -1,6 +1,7 @@
 use chrono::NaiveDate;
 use rusqlite::{Connection, Result};
-use crate::status::Status;
+use std::fmt;
+use crate::entities::status::Status;
 
 #[derive(Debug)]
 pub struct Livro {
@@ -49,33 +50,16 @@ impl Livro {
         Ok(())
     }
 
-    pub fn atualizar(&self, conn: &Connection) -> Result<()> {
-        if let Some(id) = self.id {
-            conn.execute(
-                "UPDATE livros 
-                 SET titulo = ?1, data_publicacao = ?2, numero_paginas = ?3, status = ?4 
-                 WHERE id = ?5",
-                (
-                    &self.titulo,
-                    &self.data_publicacao.to_string(),
-                    &self.numero_paginas,
-                    &self.status,
-                    id,
-                ),
-            )?;
-            Ok(())
-        } else {
-            Err(rusqlite::Error::InvalidQuery)
-        }
-    }
-
-    pub fn remover(self, conn: &Connection) -> Result<()> {
-        if let Some(id) = self.id {
-            conn.execute("DELETE FROM livros WHERE id = ?1", [id])?;
-            Ok(())
-        } else {
-            Err(rusqlite::Error::InvalidQuery)
-        }
+    // Implementando fmt::Display para customizar a impressão
+    pub fn fmt_display(&self) -> String {
+        format!(
+            "ID: {}, Título: {}, Data de publicação: {}, Número de páginas: {}, Status: {:?}",
+            self.id.unwrap_or_default(), // Exibe o ID, ou 0 caso seja None
+            self.titulo,
+            self.data_publicacao,
+            self.numero_paginas,
+            self.status
+        )
     }
 }
 
@@ -95,3 +79,40 @@ pub fn listar_livros(conn: &Connection) -> Result<Vec<Livro>> {
         .collect::<Result<Vec<_>, _>>()?;
     Ok(livros)
 }
+
+ // Função para remover um livro por ID
+ pub fn remover_livro_por_id(conn: &Connection, livro_id: i32) -> Result<()> {
+    let rows_affected = conn.execute("DELETE FROM livros WHERE id = ?1", [livro_id])?;
+
+    // Verifica se alguma linha foi afetada
+    if rows_affected == 0 {
+        return Err(rusqlite::Error::QueryReturnedNoRows); // Retorna erro se nenhuma linha for afetada
+    }
+
+    Ok(())
+}
+
+pub fn atualizar_status_por_id(
+    conn: &Connection,
+    livro_id: i32,
+    novo_status: Status,
+) -> Result<()> {
+    let rows_affected = conn.execute(
+        "UPDATE livros 
+         SET status = ?1 
+         WHERE id = ?2",
+        (novo_status, livro_id),
+    )?;
+
+    // Verifica se alguma linha foi afetada
+    if rows_affected == 0 {
+        return Err(rusqlite::Error::QueryReturnedNoRows); // Retorna erro se nenhuma linha for afetada
+    }
+
+    Ok(())
+}
+
+
+
+
+
