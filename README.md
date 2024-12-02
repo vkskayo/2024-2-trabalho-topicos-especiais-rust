@@ -117,3 +117,12 @@ Parâmetros:
    Parâmetros:
    * 1: O ID do usuário.
 
+## Teste de integração
+
+   ```bash
+   cargo test
+
+Caso os prints não apareçam no terminal use o comando:
+
+   ```bash
+   cargo test --test integration_test -- --nocapture
