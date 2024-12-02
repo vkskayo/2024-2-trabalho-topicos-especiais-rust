@@ -36,7 +36,7 @@ Este é um sistema simples para gerenciar livros diretamente do terminal. Com el
    
 4. **Adicionar Usuário**:
 
- ```bash
+   ```bash
    cargo run add-user "Usuário" 11122233344 
  Parâmetros:
 * Usuário: O nome do usuário.
@@ -44,12 +44,12 @@ Este é um sistema simples para gerenciar livros diretamente do terminal. Com el
 
 5. **Listar Usuários**:
 
- ```bash
+   ```bash
    cargo run list-user
 
 7. **Remover Usuário**:
 
- ```bash
+   ```bash
    cargo run remove-user "Usuário" 11122233344 
  Parâmetros:
 * Usuário: O nome do usuário que deseja remover.
@@ -57,7 +57,7 @@ Este é um sistema simples para gerenciar livros diretamente do terminal. Com el
 
 8. **Relacionar Usuário com Livro**:
  
- ```bash
+   ```bash
    cargo run relate-user-book 1 11122233344 "emprogresso"
  Parâmetros:
 * 1: O ID do livro a ser relacionado com o usuário.
