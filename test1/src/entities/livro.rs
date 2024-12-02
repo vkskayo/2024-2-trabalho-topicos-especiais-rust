@@ -1,7 +1,5 @@
 use chrono::NaiveDate;
 use rusqlite::{Connection, Result};
-use std::fmt;
-use crate::entities::status::Status;
 
 #[derive(Debug)]
 pub struct Livro {
@@ -9,7 +7,6 @@ pub struct Livro {
     pub titulo: String,
     pub data_publicacao: NaiveDate,
     pub numero_paginas: i32,
-    pub status: Status,
 }
 
 impl Livro {
@@ -17,7 +14,6 @@ impl Livro {
         titulo: String,
         data_publicacao: NaiveDate,
         numero_paginas: i32,
-        status: Status,
     ) -> Result<Self, String> {
         if titulo.is_empty() {
             return Err("Título não pode ser vazio.".to_string());
@@ -31,19 +27,17 @@ impl Livro {
             titulo,
             data_publicacao,
             numero_paginas,
-            status,
         })
     }
 
     pub fn save(&mut self, conn: &Connection) -> Result<()> {
         conn.execute(
-            "INSERT INTO livros (titulo, data_publicacao, numero_paginas, status) 
-             VALUES (?1, ?2, ?3, ?4)",
+            "INSERT INTO livros (titulo, data_publicacao, numero_paginas) 
+             VALUES (?1, ?2, ?3)",
             (
                 &self.titulo,
                 &self.data_publicacao.to_string(),
                 &self.numero_paginas,
-                &self.status,
             ),
         )?;
         self.id = Some(conn.last_insert_rowid() as i32);
@@ -53,18 +47,17 @@ impl Livro {
     // Implementando fmt::Display para customizar a impressão
     pub fn fmt_display(&self) -> String {
         format!(
-            "ID: {}, Título: {}, Data de publicação: {}, Número de páginas: {}, Status: {:?}",
+            "ID: {}, Título: {}, Data de publicação: {}, Número de páginas: {}",
             self.id.unwrap_or_default(), // Exibe o ID, ou 0 caso seja None
             self.titulo,
             self.data_publicacao,
-            self.numero_paginas,
-            self.status
+            self.numero_paginas
         )
     }
 }
 
 pub fn listar_livros(conn: &Connection) -> Result<Vec<Livro>> {
-    let mut stmt = conn.prepare("SELECT id, titulo, data_publicacao, numero_paginas, status FROM livros")?;
+    let mut stmt = conn.prepare("SELECT id, titulo, data_publicacao, numero_paginas FROM livros")?;
     let livros = stmt
         .query_map([], |row| {
             Ok(Livro {
@@ -73,7 +66,6 @@ pub fn listar_livros(conn: &Connection) -> Result<Vec<Livro>> {
                 data_publicacao: NaiveDate::parse_from_str(&row.get::<_, String>(2)?, "%Y-%m-%d")
     .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?,
                 numero_paginas: row.get(3)?,
-                status: row.get(4)?,
             })
         })?
         .collect::<Result<Vec<_>, _>>()?;
@@ -92,25 +84,6 @@ pub fn listar_livros(conn: &Connection) -> Result<Vec<Livro>> {
     Ok(())
 }
 
-pub fn atualizar_status_por_id(
-    conn: &Connection,
-    livro_id: i32,
-    novo_status: Status,
-) -> Result<()> {
-    let rows_affected = conn.execute(
-        "UPDATE livros 
-         SET status = ?1 
-         WHERE id = ?2",
-        (novo_status, livro_id),
-    )?;
-
-    // Verifica se alguma linha foi afetada
-    if rows_affected == 0 {
-        return Err(rusqlite::Error::QueryReturnedNoRows); // Retorna erro se nenhuma linha for afetada
-    }
-
-    Ok(())
-}
 
 
 
