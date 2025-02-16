@@ -29,7 +29,7 @@ mod biblioteca {
     pub struct Livro {
         pub id: u32,
         pub titulo: String,
-        pub data_publicacao: String,
+        pub data_publicacao: u32,
         pub numero_paginas: u32,
         pub emprestado_para: Option<u32>, // ID do User que possui o livro
     }
@@ -129,13 +129,13 @@ mod biblioteca {
         // ----- CRUD para Livros -----
 
         #[ink(message)]
-        pub fn criar_livro(&mut self, titulo: String, data_publicacao: String, numero_paginas: u32) -> Result<u32, String> {
+        pub fn criar_livro(&mut self, titulo: String, data_publicacao: u32, numero_paginas: u32) -> Result<u32, String> {
             if titulo.is_empty() {
                 return Err("Título não pode estar vazio".to_string());
             }
 
-            if !Self::data_valida(&data_publicacao) {
-                return Err("Data de publicação inválida. O formato deve ser dd-mm-yyyy".to_string());
+            if !Self::data_valida(&data_publicacao.to_string()) {
+                return Err("Data de publicação inválida. Deve conter exatamente 8 dígitos no formato DDMMAAAA".to_string());
             }
 
             let id = self.next_livro_id;
@@ -151,14 +151,14 @@ mod biblioteca {
         }
 
         #[ink(message)]
-        pub fn atualizar_livro(&mut self, id: u32, titulo: String, data_publicacao: String, numero_paginas: u32) -> Result<bool, String> {
+        pub fn atualizar_livro(&mut self, id: u32, titulo: String, data_publicacao: u32, numero_paginas: u32) -> Result<bool, String> {
             if let Some(mut livro) = self.livros.get(id) {
                 if titulo.is_empty() {
                     return Err("Título não pode estar vazio".to_string());
                 }
 
-                if !Self::data_valida(&data_publicacao) {
-                    return Err("Data de publicação inválida. O formato deve ser dd-mm-yyyy".to_string());
+                if !Self::data_valida(&data_publicacao.to_string()) {
+                    return Err("Data de publicação inválida. Deve conter exatamente 8 dígitos no formato DDMMAAAA".to_string());
                 }
 
                 livro.titulo = titulo;
@@ -235,38 +235,10 @@ mod biblioteca {
         }
 
         fn data_valida(data: &str) -> bool {
-            let partes: Vec<&str> = data.split('-').collect();
-    
-            if partes.len() != 3 {
-                return false;
-            }
-    
-            if !partes.iter().all(|parte| parte.chars().all(|c| c.is_ascii_digit())) {
-                return false;
-            }
-    
-            let dia: usize = partes[0].parse().unwrap_or(0);
-            let mes: usize = partes[1].parse().unwrap_or(0);
-            let ano: usize = partes[2].parse().unwrap_or(0);
-    
-            if dia == 0 || mes == 0 || mes > 12 || ano == 0 {
-                return false;
-            }
-    
-            let dias_por_mes = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    
-            let dias_mes = if mes == 2 && Self::ano_bissexto(ano) {
-                29
-            } else {
-                dias_por_mes[mes.saturating_sub(1)]
-            };
-    
-            dia <= dias_mes
-        }
 
-        // Verifica se um ano é bissexto
-        fn ano_bissexto(ano: usize) -> bool {
-            (ano % 4 == 0 && ano % 100 != 0) || (ano % 400 == 0)
+            let data_str = data.to_string();
+            data_str.len() == 8 && data_str.chars().all(|c| c.is_ascii_digit())
+
         }
     }
 
@@ -331,7 +303,7 @@ mod biblioteca {
 
             // Cria usuário e livro
             let user_id = biblioteca.criar_user("João Silva".to_string(), "12345678901".to_string(), 25).unwrap();
-            let livro_id = biblioteca.criar_livro("Rust Programming".to_string(), "01-01-2023".to_string(), 500).unwrap();
+            let livro_id = biblioteca.criar_livro("Rust Programming".to_string(), 01012023, 500).unwrap();
 
             let result = biblioteca.emprestar_livro(user_id, livro_id);
             assert!(result.is_ok(), "Falha ao emprestar livro válido");
@@ -346,7 +318,7 @@ mod biblioteca {
 
             // Cria usuário e livro, realiza empréstimo
             let user_id = biblioteca.criar_user("João Silva".to_string(), "12345678901".to_string(), 25).unwrap();
-            let livro_id = biblioteca.criar_livro("Rust Programming".to_string(), "01-01-2023".to_string(), 500).unwrap();
+            let livro_id = biblioteca.criar_livro("Rust Programming".to_string(), 01012023, 500).unwrap();
             biblioteca.emprestar_livro(user_id, livro_id).unwrap();
 
             let result = biblioteca.devolver_livro(user_id, livro_id);
